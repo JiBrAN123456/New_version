@@ -25,7 +25,7 @@ class Role(models.Model):
         return self.name
 
 
-class UserManager(models.Model):
+class UserManager(BaseUserManager):
     def create_user(self, email , password = None ,**extra_fields):
         if not email:
             raise ValueError("Email required")
