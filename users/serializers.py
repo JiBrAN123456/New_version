@@ -5,6 +5,9 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from .models import User, Company, Role, Profile
 from .OTP import OTP
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -17,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.Serializer):
     password = serializers.CharField(write_only = True)
     company = serializers.PrimaryKeyRelatedField(queryset= Company.objects.all(), required = False)
-    role = serializers.PrimaryKeyRelatedField(queryset= Role.object.all() , required =False) 
+    role = serializers.PrimaryKeyRelatedField(queryset= Role.objects.all() , required =False) 
 
 
     class Meta:
@@ -59,3 +62,40 @@ class UserRegistrationSerializer(serializers.Serializer):
             [user.email],
         )
         return user    
+    
+
+
+class LoginSerializer(serializers.ModelSerializer):
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only= True) 
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get("password")
+
+        user = authenticate(email= email , password=password)
+        if not user:
+            raise serializers.ValidationError("not valid user or password")
+        
+        refresh = RefreshToken.for_user(user)
+
+        return{
+            "access" : str(refresh.access_token),
+            "refresh" : str(refresh),
+            "user": UserSerializer(user).data
+        }
+    
+
+class ProfileSerializer(serializers.ModelSerializer):    
+
+    user_email = serializers.EmailField(source = 'user.email', read_only = True)
+    user_company = serializers.CharField(source = 'user.company.name' , read_only = True)
+    user_role = serializers.CharField(source = "role.name", read_only = True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True) 
+    
+    class Meta:
+        model = Profile
+        fields = ["user" ,"user_email", "user_company", "user_role", "phone_number" , "created_at", "modified_at"]
+
+  
