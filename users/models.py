@@ -84,4 +84,27 @@ class Profile(models.Model):
 
 
     def __str__(self):
-        return self.user.email , self.user.phone_number, self.user.role , self.user.company 
+        return f"{self.user.email} -  {self.user.role} - {self.user.company}" 
+    
+
+
+class AuditLog(models.Model):
+
+    ACTION_CHOICES = [
+        ("register", "Register"),
+        ("login", "Login"),
+        ("logout", "Logout"),
+        ("update", "Update"),
+        ("delete", "Delete"),
+
+    ]    
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User , on_delete=models.CASCADE , related_name= "audit_logs")
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(blank = True, null = True)
+
+
+    def __str__(self):
+        return f"{self.user.email} - {self.action} at {self.timestamp}"
