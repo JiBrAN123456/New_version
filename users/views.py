@@ -6,8 +6,10 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User
-from .serializers import UserRegistrationSerializer
+from .models import User , Profile
+from .serializers import UserRegistrationSerializer , LoginSerializer , ProfileSerializer
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
@@ -16,6 +18,7 @@ def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {'refresh':str(refresh),
             "access" : str(refresh.access_token)}
+
 
 
 class RegistrationView(APIView):
@@ -27,7 +30,8 @@ class RegistrationView(APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
 
-class ActivaterUserVieq(APIView):
+
+class ActivaterUserView(APIView):
     def get(self ,request,uidb64, token):
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
@@ -41,6 +45,8 @@ class ActivaterUserVieq(APIView):
             return Response({"message": "Email verified successfully!"})
         return Response({"error": "Invalid or expired token"}, status=400)
     
+
+
 class VerifyOTPView(APIView):
     def post(self, request):
         email = request.data.get("email")
@@ -57,3 +63,49 @@ class VerifyOTPView(APIView):
             "message": "2FA complete. You are now logged in.",
             "tokens": tokens
         }, status=200)
+    
+
+
+
+
+class CustomLoginView(APIView):
+    def post(self,request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+           return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        return Response(serializer.errors , status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]    
+
+    def post(self, request):
+
+        try:
+            refresh_token = request.data.get("refresh")
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'message':"Sucessfully blacklisted"})
+        except Exception as e:
+            return Response({'error':"Invalid Token"})
+        
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        
+        user = request.user
+
+        try:
+            profile = user.profile
+        except Profile.DoesNotExist:
+            return Response({"error": "Profile not found"})   
+        
+
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
