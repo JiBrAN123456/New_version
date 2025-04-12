@@ -56,3 +56,30 @@ class AuditLogMixenInventory(models.Model):
 
     def get_company(self):
         return None  
+
+
+class VehicleInventory( AuditLogMixenInventory,models.Model):
+    FUEL_CHOICES = [("PETROL","Petrol"),
+                    ("DIESEL"," Diesel"),
+                    ("ELECTRIC", "Electric")]
+
+    TRANSMISSION_CHOICES = [("ELECTRIC", "Electric"),
+                            ("MANUAL","Manual"),
+                            ("AUTOMATIC","Automatic")]
+
+    brand = models.CharField(max_length=40)
+    model = models.CharField(max_length=40)
+    year = models.IntegerField()
+    fuel_type = models.CharField(max_length=20, choices=FUEL_CHOICES)
+    transmission = models.CharField(max_length=20, choices=TRANSMISSION_CHOICES)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="inventory")
+    price = models.IntegerField()
+    quantity = models.IntegerField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now=True)
+    modified_at = models.DateTimeField(auto_now_add=True)
+    mileage = models.IntegerField()
+
+
+    def __str__(self):
+        return f"{self.brand} {self.model} ({self.year} - Qty: {self.quantity} - {self.mileage})"
