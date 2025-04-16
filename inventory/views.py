@@ -28,7 +28,7 @@ class VehiclePagination(PageNumberPagination):
         })
 
 
-class VehileInventoryViewSet(viewsets.ReadOnlyModelViewSet):
+class VehicleInventoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = VehicleInventorySerializer
     pagination_class = VehiclePagination
     permission_classes = [permissions.IsAuthenticated]
@@ -45,5 +45,16 @@ class VehileInventoryViewSet(viewsets.ReadOnlyModelViewSet):
         min_year = self.request.query_params.get("year__gte")
         max_year = self.request.query_params.get("year__lte")
 
+        if min_year:
+            queryset = queryset.filter(year__gte=min_year)
+        if max_year:
+            queryset = queryset.filter(year__gte=max_year)    
+        
+        search_query = self.request.query_params.get("search")
+        if search_query:
+           queryset = queryset.filter(
+               Q(brand__icontains=search_query) |
+               Q(model__icontains=search_query)
+           )
 
         return queryset
