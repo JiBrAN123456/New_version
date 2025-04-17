@@ -12,4 +12,5 @@ router.register(r'master-inventory', VehicleInventoryViewSet, basename='vehicle-
 
 urlpatterns = [
     path('', include(router.urls)),  # Include all registered endpoints
+    path('invoices/', include('invoices.urls')),
 ]
