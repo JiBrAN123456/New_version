@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "users",
     "inventory",
     "invoices",
+    'django_filters',
 ]
 
 MIDDLEWARE = [
